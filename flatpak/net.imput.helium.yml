@@ -20,6 +20,8 @@ modules:
       - install -Dm644 /app/helium/helium.desktop /app/share/applications/net.imput.helium.desktop
       # Keep upstream translations and actions, routing every Exec through our launcher.
       - sed -i -E 's/^Exec=helium([[:space:]]|$)/Exec=helium-flatpak\1/' /app/share/applications/net.imput.helium.desktop
+      # The browser runs on the host, so it cannot complete Flatpak's startup notification.
+      - sed -i 's/^StartupNotify=true$/StartupNotify=false/' /app/share/applications/net.imput.helium.desktop
       - desktop-file-edit --set-icon=net.imput.helium /app/share/applications/net.imput.helium.desktop
       - install -Dm644 net.imput.helium.metainfo.xml /app/share/metainfo/net.imput.helium.metainfo.xml
       - install -Dm644 /app/helium/product_logo_256.png /app/share/icons/hicolor/256x256/apps/net.imput.helium.png

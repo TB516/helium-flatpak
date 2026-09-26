@@ -2,7 +2,9 @@
 
 The manifest repackages official, checksum-pinned Helium tarballs for x86_64
 and aarch64. It preserves the upstream desktop translations and actions,
-changing the executable and icon references to match this package.
+changing the executable and icon references to match this package. It disables
+startup notification because the browser runs on the host, outside Flatpak's
+launch tracking.
 
 The host needs Flatpak, Flatpak Builder, and the per-user
 `org.freedesktop.Platform//25.08` and `org.freedesktop.Sdk//25.08` for its
