@@ -1,0 +1,32 @@
+#!/bin/sh
+set -eu
+
+config_home=$1
+data_home=$2
+cache_home=$3
+state_home=$4
+wrapper=$5
+shift 5
+
+# xdg-user-dir reads this file from XDG_CONFIG_HOME. Without it, a fresh
+# browser profile can default downloads to $HOME instead of ~/Downloads.
+host_config_home=${XDG_CONFIG_HOME:-$HOME/.config}
+mkdir -p "$config_home"
+if [ -f "$host_config_home/user-dirs.dirs" ] &&
+    [ ! -e "$config_home/user-dirs.dirs" ] &&
+    [ ! -L "$config_home/user-dirs.dirs" ]; then
+    # Another launch may have created the link since the check above.
+    ln -sT "$host_config_home/user-dirs.dirs" "$config_home/user-dirs.dirs" ||
+        [ -L "$config_home/user-dirs.dirs" ]
+fi
+
+XDG_CONFIG_HOME=$config_home
+XDG_DATA_HOME=$data_home
+XDG_CACHE_HOME=$cache_home
+XDG_STATE_HOME=$state_home
+export XDG_CONFIG_HOME XDG_DATA_HOME XDG_CACHE_HOME XDG_STATE_HOME
+
+# Match the exported desktop entry for Chromium's desktop integration.
+export HELIUM_DESKTOP=net.imput.helium.desktop
+
+exec "$wrapper" "$@"

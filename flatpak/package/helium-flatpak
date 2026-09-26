@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+
+# Use the exact deployment mounted at /app, including for local builds.
+# Flatpak stores this host path as an escaped key-file string.
+app_path=$(printf '%b' "$(sed -n 's/^app-path=//p' /.flatpak-info)")
+if [ -z "$app_path" ]; then
+    echo "Could not find Helium's host path in /.flatpak-info." >&2
+    exit 1
+fi
+
+exec flatpak-spawn --host "$app_path/libexec/helium-host" \
+    "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" "$XDG_CACHE_HOME" "$XDG_STATE_HOME" \
+    "$app_path/helium/helium-wrapper" "$@"

@@ -1,0 +1,58 @@
+app-id: net.imput.helium
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+command: helium-flatpak
+default-branch: stable
+
+finish-args:
+  # Required for flatpak-spawn --host. Helium itself runs outside this sandbox.
+  - --talk-name=org.freedesktop.Flatpak
+
+modules:
+  - name: helium
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/helium
+      - cp -a helium-*_linux/. /app/helium/
+      - install -Dm755 helium-flatpak /app/bin/helium-flatpak
+      - install -Dm755 helium-host /app/libexec/helium-host
+      - install -Dm644 /app/helium/helium.desktop /app/share/applications/net.imput.helium.desktop
+      # Keep upstream translations and actions, routing every Exec through our launcher.
+      - sed -i -E 's/^Exec=helium([[:space:]]|$)/Exec=helium-flatpak\1/' /app/share/applications/net.imput.helium.desktop
+      - desktop-file-edit --set-icon=net.imput.helium /app/share/applications/net.imput.helium.desktop
+      - install -Dm644 net.imput.helium.metainfo.xml /app/share/metainfo/net.imput.helium.metainfo.xml
+      - install -Dm644 /app/helium/product_logo_256.png /app/share/icons/hicolor/256x256/apps/net.imput.helium.png
+      - sh -n /app/bin/helium-flatpak /app/libexec/helium-host
+      - desktop-file-validate /app/share/applications/net.imput.helium.desktop
+    sources:
+      - type: archive
+        url: https://github.com/imputnet/helium-linux/releases/download/0.18.1.1/helium-0.18.1.1-x86_64_linux.tar.xz
+        sha256: 9f4d35239eea18b290846221874265ac2a8637adff954df69fdef77d6b15042c
+        strip-components: 0
+        only-arches: [x86_64]
+        x-checker-data:
+          type: json
+          url: https://api.github.com/repos/imputnet/helium-linux/releases/latest
+          version-query: .tag_name
+          timestamp-query: .published_at
+          url-query: '.assets[] | select(.name == "helium-" + $version + "-x86_64_linux.tar.xz") | .browser_download_url'
+          is-main-source: true
+          release-url-template: https://github.com/imputnet/helium-linux/releases/tag/$version
+      - type: archive
+        url: https://github.com/imputnet/helium-linux/releases/download/0.18.1.1/helium-0.18.1.1-arm64_linux.tar.xz
+        sha256: 509ea4bfc617fff456f4584814894c6da71b3fe5b6d09637b08b4f3c76abec9e
+        strip-components: 0
+        only-arches: [aarch64]
+        x-checker-data:
+          type: json
+          url: https://api.github.com/repos/imputnet/helium-linux/releases/latest
+          version-query: .tag_name
+          timestamp-query: .published_at
+          url-query: '.assets[] | select(.name == "helium-" + $version + "-arm64_linux.tar.xz") | .browser_download_url'
+      - type: file
+        path: package/helium-flatpak
+      - type: file
+        path: package/helium-host
+      - type: file
+        path: net.imput.helium.metainfo.xml

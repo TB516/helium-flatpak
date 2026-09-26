@@ -1,0 +1,51 @@
+name: Validate Flatpak update
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/validate-flatpak.yml
+      - .github/workflows/publish-flatpak.yml
+      - flatpak/**
+      - '!flatpak/pages/**'
+      - scripts/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-25.08
+      options: --privileged
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Build Flatpak and validate metadata
+        uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          manifest-path: flatpak/net.imput.helium.yml
+          arch: ${{ matrix.arch }}
+          branch: stable
+          build-bundle: false
+          upload-artifact: false
+          build-dir: build-flatpak/validation-build
+          repo-dir: build-flatpak/validation-repo
+          state-dir: build-flatpak/builder-state
+          cache-key: flatpak-builder-${{ matrix.arch }}-${{ hashFiles('flatpak/**', '!flatpak/pages/**') }}

@@ -1,0 +1,174 @@
+name: Publish Flatpak repository
+
+on:
+  workflow_dispatch:
+    inputs:
+      first-publish:
+        description: Start a new repository without published history (first publication only)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+env:
+  APP_ID: net.imput.helium
+  FLATPAK_BRANCH: stable
+  FLATPAK_REPOSITORY_URL: https://helium.thomasberrios.com/repo
+  PAGES_DIR: build-flatpak/pages
+
+jobs:
+  build:
+    name: Build ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    defaults:
+      run:
+        shell: bash
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-25.08
+      options: --privileged
+    env:
+      FLATPAK_ARCH: ${{ matrix.arch }}
+      REPO_DIR: build-flatpak/repo
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Import repository signing key
+        id: signing
+        uses: crazy-max/ghaction-import-gpg@v7
+        with:
+          gpg_private_key: ${{ secrets.FLATPAK_GPG_PRIVATE_KEY }}
+
+      - name: Prepare Flatpak repository
+        env:
+          GPG_FINGERPRINT: ${{ steps.signing.outputs.fingerprint }}
+        run: |
+          mkdir -p "$REPO_DIR"
+          gpg --batch --export "$GPG_FINGERPRINT" > build-flatpak-repository-key.gpg
+          ostree --repo="$REPO_DIR" init --mode=archive-z2
+
+      - name: Restore published architecture history
+        if: ${{ !inputs.first-publish }}
+        run: |
+          ostree --repo="$REPO_DIR" remote add \
+            --gpg-import=build-flatpak-repository-key.gpg \
+            published "$FLATPAK_REPOSITORY_URL"
+          ostree --repo="$REPO_DIR" pull \
+            --disable-static-deltas --mirror --depth=2 \
+            published "app/$APP_ID/$FLATPAK_ARCH/$FLATPAK_BRANCH"
+          ostree --repo="$REPO_DIR" remote delete published
+
+      - name: Build signed Flatpak
+        uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          manifest-path: flatpak/net.imput.helium.yml
+          arch: ${{ matrix.arch }}
+          branch: ${{ env.FLATPAK_BRANCH }}
+          build-bundle: false
+          upload-artifact: false
+          build-dir: build-flatpak/publish-build
+          repo-dir: ${{ env.REPO_DIR }}
+          state-dir: build-flatpak/builder-state
+          gpg-sign: ${{ steps.signing.outputs.fingerprint }}
+          cache-key: flatpak-builder-${{ matrix.arch }}-${{ hashFiles('flatpak/**', '!flatpak/pages/**') }}
+
+      - name: Pack repository for publishing
+        run: |
+          mkdir -p build-flatpak/export
+          tar -C build-flatpak -cf build-flatpak/export/repo.tar repo
+          cp "build-flatpak/publish-build/files/share/icons/hicolor/256x256/apps/$APP_ID.png" build-flatpak/export/icon.png
+
+      - name: Upload architecture repository
+        uses: actions/upload-artifact@v4
+        with:
+          name: flatpak-repo-${{ matrix.arch }}
+          path: build-flatpak/export/
+          retention-days: 1
+          compression-level: 0
+
+  publish:
+    name: Combine repositories and publish
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    defaults:
+      run:
+        shell: bash
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-25.08
+      options: --privileged
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Download architecture repositories
+        uses: actions/download-artifact@v4
+        with:
+          pattern: flatpak-repo-*
+          path: build-flatpak/artifacts
+
+      - name: Import repository signing key
+        id: signing
+        uses: crazy-max/ghaction-import-gpg@v7
+        with:
+          gpg_private_key: ${{ secrets.FLATPAK_GPG_PRIVATE_KEY }}
+
+      - name: Combine and sign repository
+        env:
+          GPG_FINGERPRINT: ${{ steps.signing.outputs.fingerprint }}
+        run: |
+          repo="$PAGES_DIR/repo"
+          mkdir -p "$repo"
+          ostree --repo="$repo" init --mode=archive-z2
+          for arch in x86_64 aarch64; do
+            source_dir="build-flatpak/artifacts/flatpak-repo-$arch"
+            tar -C "$source_dir" -xf "$source_dir/repo.tar"
+            ostree --repo="$repo" pull-local --depth=2 \
+              "$source_dir/repo" "app/$APP_ID/$arch/$FLATPAK_BRANCH"
+          done
+          flatpak build-update-repo \
+            --gpg-sign="$GPG_FINGERPRINT" \
+            --prune --prune-depth=2 "$repo"
+
+      - name: Stage website and install links
+        env:
+          GPG_FINGERPRINT: ${{ steps.signing.outputs.fingerprint }}
+        run: |
+          cp -a flatpak/pages/. "$PAGES_DIR/"
+          cp build-flatpak/artifacts/flatpak-repo-x86_64/icon.png "$PAGES_DIR/icon.png"
+          gpg --batch --export "$GPG_FINGERPRINT" > build-flatpak-repository-key.gpg
+          encoded_key=$(base64 --wrap=0 < build-flatpak-repository-key.gpg)
+          sed -i "s|@GPG_KEY@|$encoded_key|g" "$PAGES_DIR/"*.flatpakrepo "$PAGES_DIR/"*.flatpakref
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ${{ env.PAGES_DIR }}
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

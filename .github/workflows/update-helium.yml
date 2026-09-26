@@ -1,0 +1,63 @@
+name: Check for Helium releases
+
+on:
+  schedule:
+    - cron: '17 9 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-helium
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Update the stable release
+        uses: docker://ghcr.io/flathub/flatpak-external-data-checker:latest
+        with:
+          args: --edit-only --filter-type archive flatpak/net.imput.helium.yml
+
+      - name: Read updated release version
+        id: release
+        uses: mikefarah/yq@v4
+        with:
+          cmd: >-
+            yq -er '.modules[] | select(.name == "helium") | .sources[] |
+            select(.type == "archive" and ."only-arches"[0] == "x86_64") |
+            .url | split("/") | .[-2]' flatpak/net.imput.helium.yml
+
+      - name: Check for an open pull request for this release
+        id: existing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_BRANCH: automation/update-helium-${{ steps.release.outputs.result }}
+        run: |
+          open_prs=$(gh pr list --head "$PR_BRANCH" --state open --json number --jq length)
+          if [[ "$open_prs" != 0 ]]; then
+            echo "open=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open update pull request
+        if: steps.existing.outputs.open != 'true'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          add-paths: |
+            flatpak/net.imput.helium.yml
+            flatpak/net.imput.helium.metainfo.xml
+          branch: automation/update-helium-${{ steps.release.outputs.result }}
+          delete-branch: true
+          draft: true
+          commit-message: 'chore(flatpak): update Helium to ${{ steps.release.outputs.result }}'
+          title: Update Helium to ${{ steps.release.outputs.result }}
+          body: |
+            Update both architecture tarballs to [Helium ${{ steps.release.outputs.result }}](https://github.com/imputnet/helium-linux/releases/tag/${{ steps.release.outputs.result }}).
+
+            Review the upstream changes and ensure **Validate Flatpak update** passes for both architectures before merging.

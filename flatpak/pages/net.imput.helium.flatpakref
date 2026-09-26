@@ -1,0 +1,11 @@
+[Flatpak Ref]
+Title=Helium
+Name=net.imput.helium
+Branch=stable
+Url=https://helium.thomasberrios.com/repo/
+SuggestRemoteName=helium
+Homepage=https://github.com/TB516/helium-flatpak
+Icon=https://helium.thomasberrios.com/icon.png
+RuntimeRepo=https://flathub.org/repo/flathub.flatpakrepo
+IsRuntime=false
+GPGKey=@GPG_KEY@
