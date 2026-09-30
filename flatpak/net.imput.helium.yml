@@ -29,8 +29,8 @@ modules:
       - desktop-file-validate /app/share/applications/net.imput.helium.desktop
     sources:
       - type: archive
-        url: https://github.com/imputnet/helium-linux/releases/download/0.18.1.1/helium-0.18.1.1-x86_64_linux.tar.xz
-        sha256: 9f4d35239eea18b290846221874265ac2a8637adff954df69fdef77d6b15042c
+        url: https://github.com/imputnet/helium-linux/releases/download/0.18.2.1/helium-0.18.2.1-x86_64_linux.tar.xz
+        sha256: 4493d756b98afbe3fd7d45c0ec215c23f5a0551fae715586fe6ce3b2298b155c
         strip-components: 0
         only-arches: [x86_64]
         x-checker-data:
@@ -38,12 +38,13 @@ modules:
           url: https://api.github.com/repos/imputnet/helium-linux/releases/latest
           version-query: .tag_name
           timestamp-query: .published_at
-          url-query: '.assets[] | select(.name == "helium-" + $version + "-x86_64_linux.tar.xz") | .browser_download_url'
+          url-query: .assets[] | select(.name == "helium-" + $version + "-x86_64_linux.tar.xz")
+            | .browser_download_url
           is-main-source: true
           release-url-template: https://github.com/imputnet/helium-linux/releases/tag/$version
       - type: archive
-        url: https://github.com/imputnet/helium-linux/releases/download/0.18.1.1/helium-0.18.1.1-arm64_linux.tar.xz
-        sha256: 509ea4bfc617fff456f4584814894c6da71b3fe5b6d09637b08b4f3c76abec9e
+        url: https://github.com/imputnet/helium-linux/releases/download/0.18.2.1/helium-0.18.2.1-arm64_linux.tar.xz
+        sha256: d8456a8092075703e79ffe321e55cc979ee8b19f27709cf1658ec9c2d86b7f29
         strip-components: 0
         only-arches: [aarch64]
         x-checker-data:
@@ -51,7 +52,8 @@ modules:
           url: https://api.github.com/repos/imputnet/helium-linux/releases/latest
           version-query: .tag_name
           timestamp-query: .published_at
-          url-query: '.assets[] | select(.name == "helium-" + $version + "-arm64_linux.tar.xz") | .browser_download_url'
+          url-query: .assets[] | select(.name == "helium-" + $version + "-arm64_linux.tar.xz")
+            | .browser_download_url
       - type: file
         path: package/helium-flatpak
       - type: file
