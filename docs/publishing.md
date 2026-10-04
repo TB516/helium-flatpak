@@ -7,7 +7,7 @@ uses Flatpak External Data Checker to update both architecture URLs and
 SHA-256 checksums in `flatpak/net.imput.helium.yml`, and the release in
 `flatpak/net.imput.helium.metainfo.xml`.
 
-Each upstream release gets a draft PR on its own branch, such as
+Each upstream release gets a PR ready for review on its own branch, such as
 `automation/update-helium-0.18.1.1`. An existing open PR for that version is
 left alone, so fixes under review are preserved. Updates never publish
 automatically.

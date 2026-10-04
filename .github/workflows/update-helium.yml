@@ -54,7 +54,7 @@ jobs:
             flatpak/net.imput.helium.metainfo.xml
           branch: automation/update-helium-${{ steps.release.outputs.result }}
           delete-branch: true
-          draft: true
+          draft: false
           commit-message: 'chore(flatpak): update Helium to ${{ steps.release.outputs.result }}'
           title: Update Helium to ${{ steps.release.outputs.result }}
           body: |
