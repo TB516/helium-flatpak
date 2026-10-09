@@ -12,9 +12,13 @@
   <url type="homepage">https://helium.computer/</url>
   <url type="bugtracker">https://github.com/imputnet/helium/issues</url>
   <releases>
+    <release version="0.19.2.1" date="2026-10-08">
+      <url type="details">https://github.com/imputnet/helium-linux/releases/tag/0.19.2.1</url>
+      <description></description>
+    </release>
     <release version="0.19.1.2" date="2026-10-08">
       <url type="details">https://github.com/imputnet/helium-linux/releases/tag/0.19.1.2</url>
-      <description></description>
+      <description/>
     </release>
     <release version="0.18.3.1" date="2026-10-02">
       <url type="details">https://github.com/imputnet/helium-linux/releases/tag/0.18.3.1</url>
