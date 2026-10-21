@@ -55,6 +55,8 @@ jobs:
           branch: automation/update-helium-${{ steps.release.outputs.result }}
           delete-branch: true
           draft: false
+          # Bot-created PRs don't notify anyone unless a person is requested.
+          reviewers: TB516
           commit-message: 'chore(flatpak): update Helium to ${{ steps.release.outputs.result }}'
           title: Update Helium to ${{ steps.release.outputs.result }}
           body: |
