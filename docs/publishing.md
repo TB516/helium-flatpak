@@ -8,7 +8,8 @@ SHA-256 checksums in `flatpak/net.imput.helium.yml`, and the release in
 `flatpak/net.imput.helium.metainfo.xml`.
 
 Each upstream release gets a PR ready for review on its own branch, such as
-`automation/update-helium-0.18.1.1`. An existing open PR for that version is
+`automation/update-helium-0.18.1.1`, and requests a review from `TB516` so
+the PR sends a notification. An existing open PR for that version is
 left alone, so fixes under review are preserved. Updates never publish
 automatically.
 
