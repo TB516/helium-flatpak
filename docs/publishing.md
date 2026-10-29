@@ -10,8 +10,8 @@ SHA-256 checksums in `flatpak/net.imput.helium.yml`, and the release in
 Each upstream release gets a PR ready for review on its own branch, such as
 `automation/update-helium-0.18.1.1`, and requests a review from `TB516` so
 the PR sends a notification. An existing open PR for that version is
-left alone, so fixes under review are preserved. Updates never publish
-automatically.
+left alone, so fixes under review are preserved. Merging the PR publishes
+the update.
 
 **Validate Flatpak update** builds both architectures on native GitHub
 runners. It validates shell syntax, the desktop entry, and AppStream metadata.
@@ -41,7 +41,8 @@ The workflows target a public `TB516/helium-flatpak` GitHub repository and
 The repository at `helium.thomasberrios.com` is initialized with Helium
 0.18.1.1 for both architectures.
 
-Run **Publish Flatpak repository** manually with **first-publish** off.
+**Publish Flatpak repository** runs on every push to `main`, and can be run
+manually with **first-publish** off.
 Each architecture job restores and verifies its published history before
 building and signing its new commit. If restoration fails, publishing stops.
 

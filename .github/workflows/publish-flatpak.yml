@@ -1,6 +1,9 @@
 name: Publish Flatpak repository
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       first-publish:
