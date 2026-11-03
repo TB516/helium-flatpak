@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+    # Only republish when the app or its publishing changes.
+    paths:
+      - flatpak/**
+      - .github/workflows/publish-flatpak.yml
   workflow_dispatch:
     inputs:
       first-publish:

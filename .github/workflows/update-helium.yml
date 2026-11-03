@@ -22,6 +22,9 @@ jobs:
 
       - name: Update the stable release
         uses: docker://ghcr.io/flathub/flatpak-external-data-checker:latest
+        # Authenticated API requests avoid the shared runner's anonymous rate limit.
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           args: --edit-only --filter-type archive flatpak/net.imput.helium.yml
 
