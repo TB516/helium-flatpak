@@ -10,6 +10,25 @@ finish-args:
   - --talk-name=org.freedesktop.Flatpak
 
 modules:
+  # Helium runs these commands on the host for web app shortcuts, default apps,
+  # and opening links, and some hosts, such as GNOME OS, do not include them.
+  - name: xdg-utils
+    buildsystem: simple
+    build-commands:
+      - |
+        cd scripts
+        for script in xdg-desktop-menu xdg-icon-resource xdg-settings xdg-mime xdg-email xdg-open; do
+          # The upstream Makefile needs xmlto only to embed help text.
+          touch "$script.txt"
+          awk -f generate-help-script.awk "$script.in" | sed "s/@NAME@/$script/g" > "$script"
+          sh -n "$script"
+          install -Dm755 "$script" "/app/libexec/xdg-utils/$script"
+        done
+    sources:
+      - type: archive
+        url: https://gitlab.freedesktop.org/xdg/xdg-utils/-/archive/v1.2.1/xdg-utils-v1.2.1.tar.gz
+        sha256: f6b648c064464c2636884c05746e80428110a576f8daacf46ef2e554dcfdae75
+
   - name: helium
     buildsystem: simple
     build-commands:
@@ -25,6 +44,10 @@ modules:
       - desktop-file-edit --set-icon=net.imput.helium /app/share/applications/net.imput.helium.desktop
       - install -Dm644 net.imput.helium.metainfo.xml /app/share/metainfo/net.imput.helium.metainfo.xml
       - install -Dm644 /app/helium/product_logo_256.png /app/share/icons/hicolor/256x256/apps/net.imput.helium.png
+      # helium-host mirrors this upstream launcher. If this fails, compare the
+      # new helium-wrapper with helium-host, then update this checksum.
+      - echo "cf6e652dc9f9c6e224f45a23c7e4dd84b0693208d63ee47a9f87ccee2748a5f2  helium-wrapper" |
+        (cd helium-*_linux && sha256sum --check --quiet)
       - sh -n /app/bin/helium-flatpak /app/libexec/helium-host
       - desktop-file-validate /app/share/applications/net.imput.helium.desktop
     sources:

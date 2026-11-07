@@ -9,6 +9,17 @@ if [ -z "$app_path" ]; then
     exit 1
 fi
 
-exec flatpak-spawn --host "$app_path/libexec/helium-host" \
-    "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" "$XDG_CACHE_HOME" "$XDG_STATE_HOME" \
-    "$app_path/helium/helium-wrapper" "$@"
+# Unlike app_path, Flatpak's exported launcher keeps its path across updates.
+launcher=${app_path%/app/net.imput.helium/*}/exports/bin/net.imput.helium
+
+# Helium uses the host's XDG directories like any host app, so desktop
+# settings and default apps work. Only its profile and cache stay in the
+# Flatpak data directory. Arguments passed later can still override them.
+# Crash reports ignore --user-data-dir, so they need their own location.
+exec flatpak-spawn --host \
+    --env=BREAKPAD_DUMP_LOCATION="$XDG_CONFIG_HOME/net.imput.helium/Crash Reports" \
+    "$app_path/libexec/helium-host" \
+    "$launcher" "$app_path/helium" \
+    --user-data-dir="$XDG_CONFIG_HOME/net.imput.helium" \
+    --disk-cache-dir="$XDG_CACHE_HOME/net.imput.helium" \
+    "$@"

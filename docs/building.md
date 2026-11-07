@@ -36,17 +36,30 @@ cache stay in `build-flatpak/`.
 when multiple branches or installations exist. It starts `helium-host` at
 that host path using `flatpak-spawn --host`.
 
-`helium-host` keeps the host environment except for the four XDG base
-directories and `HELIUM_DESKTOP`, which identifies the exported desktop entry.
-It links the host user-folder settings when the app has none, then executes
-the upstream wrapper with the original arguments. There is no runtime copy
-of the payload and no cleanup process.
+`helium-flatpak` passes `--user-data-dir` and `--disk-cache-dir` so Helium's
+profile and cache stay in the Flatpak data directory, and sets
+`BREAKPAD_DUMP_LOCATION` so crash reports stay in the profile. Otherwise Helium keeps
+the host's XDG directories like a native install, so desktop settings, default
+apps, and web app shortcuts reach the host.
+
+`helium-host` sets `HELIUM_DESKTOP`, which identifies the exported desktop
+entry, and the same environment as the upstream `helium-wrapper`, then starts
+Helium with the original arguments. `CHROME_WRAPPER` points at Flatpak's
+exported launcher instead of the wrapper, so web app shortcuts and relaunches
+keep working after updates. There is no runtime copy of the payload and no
+cleanup process.
+
+Helium runs xdg-utils commands on the host, which some hosts do not provide.
+The manifest bundles the ones Helium uses under `/app/libexec/xdg-utils`, and
+`helium-host` appends that directory to `PATH` so host copies take precedence.
 
 ## Manual checks
 
 After installing a build, check launch from the app menu, the new-window and
 incognito actions, and opening a URL. Check the profile path at
 `chrome://version` and sandbox status at `chrome://sandbox`. Try a download,
-a file picker, and Wayland screen sharing on the target desktop.
+a file picker, and Wayland screen sharing on the target desktop. Install a web
+app and check that it appears in the app menu and that its window matches it.
+Set Helium as the default browser from its settings.
 
 These checks cover behavior that a successful package build cannot verify.

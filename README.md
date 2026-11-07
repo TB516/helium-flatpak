@@ -24,13 +24,18 @@ Helium has the same access to your system as a native install. This package
 does not disable Chromium's sandbox. It uses host libraries, so compatibility
 depends on your distribution.
 
-Your browser profile and other XDG data live under
-`~/.var/app/net.imput.helium/`, separate from a native Helium profile.
-The launcher links your host's `user-dirs.dirs` file when available, keeping
-Downloads and other user folders at their configured locations.
+Your browser profile and cache live under `~/.var/app/net.imput.helium/`,
+separate from a native Helium profile. Everything else works like a native
+install: Helium follows your desktop settings, fonts, user folders, and
+default apps, and can set itself as your default browser.
+
+Web apps you install from Helium get app menu shortcuts and icons in
+`~/.local/share`. Helium may also place a shortcut in your desktop folder.
 
 Uninstall with `flatpak uninstall net.imput.helium`. Your browser data
-is kept unless you also request its deletion.
+is kept unless you also request its deletion. Web app shortcuts are not
+removed by uninstalling, so remove your web apps in Helium at
+`chrome://apps` first.
 
 Maintainers can find update and release instructions in
 [Publishing](docs/publishing.md). For local builds, see
