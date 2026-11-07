@@ -13,6 +13,12 @@ the PR sends a notification. An existing open PR for that version is
 left alone, so fixes under review are preserved. Merging the PR publishes
 the update.
 
+For packaging fixes users will notice without a new upstream release, add an
+AppStream release that appends a hyphen and package revision to the upstream
+version, such as `0.21.1.1-1`, with a note describing the fix. Increment that
+revision for each such release. Changes users won't notice, such as CI or build
+tweaks, don't need a release entry.
+
 **Validate Flatpak update** builds both architectures on native GitHub
 runners. It validates shell syntax, the desktop entry, and AppStream metadata.
 It does not test a graphical browser session. Website-only changes skip
