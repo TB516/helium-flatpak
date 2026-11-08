@@ -61,7 +61,7 @@ jobs:
           # Bot-created PRs don't notify anyone unless a person is requested.
           reviewers: TB516
           commit-message: 'chore(flatpak): update Helium to ${{ steps.release.outputs.result }}'
-          title: Update Helium to ${{ steps.release.outputs.result }}
+          title: 'chore(flatpak): update Helium to ${{ steps.release.outputs.result }}'
           body: |
             Update both architecture tarballs to [Helium ${{ steps.release.outputs.result }}](https://github.com/imputnet/helium-linux/releases/tag/${{ steps.release.outputs.result }}).
 
