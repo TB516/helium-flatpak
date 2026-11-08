@@ -1,25 +1,45 @@
 name: Validate Flatpak update
 
 on:
+  # Runs on every PR so the required check always reports. PRs without
+  # package changes skip the build.
   pull_request:
-    paths:
-      - .github/workflows/validate-flatpak.yml
-      - .github/workflows/publish-flatpak.yml
-      - flatpak/**
-      - '!flatpak/pages/**'
-      - scripts/**
   workflow_dispatch:
 
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Check for package changes
+    runs-on: ubuntu-24.04
+    outputs:
+      # Manual runs always build.
+      package: ${{ github.event_name == 'workflow_dispatch' || steps.filter.outputs.package }}
+    steps:
+      - name: Check changed files
+        id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@v4
+        with:
+          predicate-quantifier: some-with-excludes
+          filters: |
+            package:
+              - .github/workflows/validate-flatpak.yml
+              - .github/workflows/publish-flatpak.yml
+              - flatpak/**
+              - '!flatpak/pages/**'
+              - scripts/**
+
   build:
     name: Build ${{ matrix.arch }}
+    needs: changes
+    if: needs.changes.outputs.package == 'true'
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     strategy:
@@ -49,3 +69,15 @@ jobs:
           repo-dir: build-flatpak/validation-repo
           state-dir: build-flatpak/builder-state
           cache-key: flatpak-builder-${{ matrix.arch }}-${{ hashFiles('flatpak/**', '!flatpak/pages/**') }}
+
+  # The required check. Skipped matrix jobs don't report per-architecture
+  # names, so this job reports one result for both builds.
+  validate:
+    name: Validate
+    needs: [changes, build]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check build results
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
