@@ -13,6 +13,10 @@ the PR sends a notification. An existing open PR for that version is
 left alone, so fixes under review are preserved. Merging the PR publishes
 the update.
 
+Squash-merging a PR with several commits uses its title as the commit
+message, so PR titles use the `type(scope): description` format, such as
+`chore(flatpak): update Helium to 0.21.1.1`.
+
 For packaging fixes users will notice without a new upstream release, add an
 AppStream release that appends a hyphen and package revision to the upstream
 version, such as `0.21.1.1-1`, with a note describing the fix. Increment that
