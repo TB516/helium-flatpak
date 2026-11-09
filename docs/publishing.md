@@ -7,11 +7,12 @@ uses Flatpak External Data Checker to update both architecture URLs and
 SHA-256 checksums in `flatpak/net.imput.helium.yml`, and the release in
 `flatpak/net.imput.helium.metainfo.xml`.
 
-Each upstream release gets a PR ready for review on its own branch, such as
-`automation/update-helium-0.18.1.1`, and requests a review from `TB516` so
-the PR sends a notification. An existing open PR for that version is
-left alone, so fixes under review are preserved. Merging the PR publishes
-the update.
+Each upstream release gets a PR on its own branch, such as
+`automation/update-helium-0.18.1.1`, opened by `tbot516[bot]` with auto-merge
+enabled. It requests a review from `TB516` so the PR sends a notification. An
+existing open PR for that version is left alone, so fixes under review are
+preserved. The PR merges itself once **Validate Flatpak update** passes, and
+that merge publishes the update. If validation fails, the PR stays open.
 
 Squash-merging a PR with several commits uses its title as the commit
 message, so PR titles use the `type(scope): description` format, such as
@@ -28,10 +29,11 @@ runners. It validates shell syntax, the desktop entry, and AppStream metadata.
 It does not test a graphical browser session. Website-only changes skip
 package validation and do not change the build cache key.
 
-Enable **Allow GitHub Actions to create and approve pull requests** in the
-repository's Actions settings. Approve validation runs on updater-created
-PRs when GitHub requests it, or start validation manually on the PR branch.
-Review the upstream release and both architecture builds before merging.
+The updater opens PRs as the `tbot516` GitHub App, so validation and
+publishing start on their own. Install the app on this repository, store its
+client ID as the Actions variable `BOT_CLIENT_ID` and its private key as the
+Actions secret `BOT_PRIVATE_KEY`, and enable **Allow auto-merge** in the
+repository settings.
 
 ## First publication
 
