@@ -16,8 +16,11 @@ launcher=${app_path%/app/net.imput.helium/*}/exports/bin/net.imput.helium
 # settings and default apps work. Only its profile and cache stay in the
 # Flatpak data directory. Arguments passed later can still override them.
 # Crash reports ignore --user-data-dir, so they need their own location.
+# flatpak-spawn drops the caller's environment, so forward a launcher's
+# activation token to let the desktop finish startup and focus the window.
 exec flatpak-spawn --host \
     --env=BREAKPAD_DUMP_LOCATION="$XDG_CONFIG_HOME/net.imput.helium/Crash Reports" \
+    ${XDG_ACTIVATION_TOKEN:+"--env=XDG_ACTIVATION_TOKEN=$XDG_ACTIVATION_TOKEN"} \
     "$app_path/libexec/helium-host" \
     "$launcher" "$app_path/helium" \
     --user-data-dir="$XDG_CONFIG_HOME/net.imput.helium" \
