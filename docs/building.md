@@ -2,9 +2,7 @@
 
 The manifest repackages official, checksum-pinned Helium tarballs for x86_64
 and aarch64. It preserves the upstream desktop translations and actions,
-changing the executable and icon references to match this package. It disables
-startup notification because the browser runs on the host, outside Flatpak's
-launch tracking.
+changing the executable and icon references to match this package.
 
 The host needs Flatpak, Flatpak Builder, and the per-user
 `org.freedesktop.Platform//25.08` and `org.freedesktop.Sdk//25.08` for its
@@ -34,7 +32,10 @@ cache stay in `build-flatpak/`.
 `flatpak/package/helium-flatpak` reads the running instance's `app-path` from
 `/.flatpak-info`. This identifies the exact files mounted at `/app`, including
 when multiple branches or installations exist. It starts `helium-host` at
-that host path using `flatpak-spawn --host`.
+that host path using `flatpak-spawn --host`. That drops the caller's
+environment, so it forwards `XDG_ACTIVATION_TOKEN` when an app launcher sets
+it. Helium uses the token to end the desktop's loading cursor and focus
+its window.
 
 `helium-flatpak` passes `--user-data-dir` and `--disk-cache-dir` so Helium's
 profile and cache stay in the Flatpak data directory, and sets
