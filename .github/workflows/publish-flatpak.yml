@@ -46,7 +46,9 @@ jobs:
         shell: bash
     container:
       image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-25.08
-      options: --privileged
+      # A volume seeded from the image keeps runtime updates off the read-only overlay
+      # layer, where they fail with "Invalid cross-device link" (flatpak-github-actions#267).
+      options: --privileged -v /var/lib/flatpak
     env:
       FLATPAK_ARCH: ${{ matrix.arch }}
       REPO_DIR: build-flatpak/repo
